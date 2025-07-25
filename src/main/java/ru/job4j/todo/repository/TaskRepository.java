@@ -1,7 +1,5 @@
 package ru.job4j.todo.repository;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import net.jcip.annotations.ThreadSafe;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -9,16 +7,18 @@ import org.springframework.stereotype.Repository;
 import ru.job4j.todo.model.Task;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
-@AllArgsConstructor
-@Data
 @ThreadSafe
 public class TaskRepository implements Store {
 
     private final SessionFactory sessionFactory;
+
+    public TaskRepository(SessionFactory sessionFactory) {
+        this.sessionFactory = sessionFactory;
+    }
 
     @Override
     public Task save(Task task) {
@@ -57,14 +57,15 @@ public class TaskRepository implements Store {
     @Override
     public List<Task> getNewTasks() {
         Session session = sessionFactory.openSession();
-        List<Task> tasks = new ArrayList<>();
+        List<Task> tasks;
+        LocalDateTime maxCreated = LocalDateTime.now();
+        LocalDateTime minCreated = LocalDateTime.now().minusDays(1);
         try {
             session.beginTransaction();
-            for (Task task : getAll()) {
-                if (task.getCreated() >= LocalDateTime.now()) {
-                    tasks.add(task);
-                }
-            }
+            tasks = session.createQuery("FROM Task as t WHERE t.created BETWEEN :min AND :max", Task.class)
+                    .setParameter("min", minCreated)
+                    .setParameter("max", maxCreated)
+                    .getResultList();
             session.getTransaction().commit();
         } catch (Exception ex) {
             session.getTransaction().rollback();
@@ -78,14 +79,12 @@ public class TaskRepository implements Store {
     @Override
     public List<Task> getDoneTasks() {
         Session session = sessionFactory.openSession();
-        List<Task> tasks = new ArrayList<>();
+        List<Task> tasks;
         try {
             session.beginTransaction();
-            for (Task task : getAll()) {
-                if (task.isDone()) {
-                    tasks.add(task);
-                }
-            }
+            tasks = session.createQuery("FROM Task as t WHERE t.done = :isDone", Task.class)
+                    .setParameter("isDone", true)
+                    .getResultList();
             session.getTransaction().commit();
         } catch (Exception ex) {
             session.getTransaction().rollback();
@@ -101,7 +100,16 @@ public class TaskRepository implements Store {
         Session session = sessionFactory.openSession();
         try {
             session.beginTransaction();
-            session.update(task);
+//            session.update(task);
+            session
+                    .createQuery(
+                            "UPDATE Task SET title = :tsTitle, description = :tsDescription, created = :tsCreated, done = :tsDone WHERE id = :tId")
+                    .setParameter("tsTitle", task.getTitle())
+                    .setParameter("tsDescription", task.getDescription())
+                    .setParameter("tsCreated", LocalDateTime.now())
+                    .setParameter("tsDone", task.isDone())
+                    .setParameter("tId", task.getId())
+                    .executeUpdate();
             session.getTransaction().commit();
         } catch (Exception ex) {
             session.getTransaction().rollback();
@@ -112,11 +120,12 @@ public class TaskRepository implements Store {
     }
 
     @Override
-    public void delete(Task task) {
+    public void delete(int id) {
         Session session = sessionFactory.openSession();
         try {
             session.beginTransaction();
-            session.delete(task.getId(), task);
+            Optional<Task> userOptional = Optional.ofNullable(session.get(Task.class, id));
+            userOptional.ifPresent(session::delete);
             session.getTransaction().commit();
         } catch (Exception ex) {
             session.getTransaction().rollback();
@@ -124,5 +133,25 @@ public class TaskRepository implements Store {
         } finally {
             session.close();
         }
+    }
+
+    @Override
+    public Optional<Task> getById(int taskId) {
+        Session session = sessionFactory.openSession();
+        Optional<Task> foundTask;
+        try {
+            session.beginTransaction();
+            foundTask = Optional.ofNullable(
+                    session.createQuery("FROM Task WHERE id = :tId", Task.class)
+                            .setParameter("tId", taskId)
+                            .getSingleResult()
+            );
+        } catch (Exception ex) {
+            session.getTransaction().rollback();
+            throw new RuntimeException("Error get task by id");
+        } finally {
+            session.close();
+        }
+        return foundTask;
     }
 }
