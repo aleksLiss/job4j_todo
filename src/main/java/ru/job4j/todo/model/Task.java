@@ -1,22 +1,23 @@
 package ru.job4j.todo.model;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
-@Data
 @NoArgsConstructor
-@Table(name = "tasks")
-@Entity
+@Data
 @EqualsAndHashCode(of = "id")
+@Entity
+@Table(name = "tasks")
 public class Task {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+    private String title;
     private String description;
     private LocalDateTime created;
+    @Getter
+    @Setter
     private boolean done;
 }
