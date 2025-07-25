@@ -1,22 +1,27 @@
 package ru.job4j.todo.service;
 
-import lombok.AllArgsConstructor;
 import net.jcip.annotations.ThreadSafe;
 import org.springframework.stereotype.Service;
 import ru.job4j.todo.model.Task;
 import ru.job4j.todo.repository.Store;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
-@AllArgsConstructor
 @ThreadSafe
 public class HbmTaskService implements TaskService {
 
     private final Store taskRepository;
 
+    public HbmTaskService(Store taskRepository) {
+        this.taskRepository = taskRepository;
+    }
+
     @Override
     public Task save(Task task) {
+        task.setCreated(LocalDateTime.now());
         return taskRepository.save(task);
     }
 
@@ -41,7 +46,12 @@ public class HbmTaskService implements TaskService {
     }
 
     @Override
-    public void delete(Task task) {
-        taskRepository.delete(task);
+    public void delete(int id) {
+        taskRepository.delete(id);
+    }
+
+    @Override
+    public Optional<Task> getById(int taskId) {
+        return taskRepository.getById(taskId);
     }
 }
