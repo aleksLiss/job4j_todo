@@ -48,10 +48,15 @@ public class UserController {
 
     @PostMapping("/login")
     public String getLoginPage(Model model, @ModelAttribute User user, HttpServletRequest request) {
-        Optional<User> getSavedUser = userService.getUserByLogin(user);
-        if (getSavedUser.isPresent()) {
-            HttpSession session = request.getSession();
-            session.setAttribute("user", getSavedUser.get());
+        try {
+            Optional<User> getSavedUser = userService.getUserByLogin(user);
+            if (getSavedUser.isPresent()) {
+                HttpSession session = request.getSession();
+                session.setAttribute("user", getSavedUser.get());
+            }
+        } catch (Exception ex) {
+            model.addAttribute("message", ex.getMessage());
+            return "errors/404";
         }
         return "redirect:/tasks/list/all";
     }

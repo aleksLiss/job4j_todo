@@ -29,7 +29,7 @@ public class SimpleUserRepository implements UserStore {
             session.getTransaction().commit();
         } catch (Exception ex) {
             session.getTransaction().rollback();
-            throw new RegisterUserException("Ошибка сохранения нового пользователя в базу");
+            throw new RegisterUserException("Ошибка регистрации: такой пользователь уже существует");
         } finally {
             session.close();
         }
@@ -48,7 +48,7 @@ public class SimpleUserRepository implements UserStore {
             session.getTransaction().commit();
         } catch (Exception e) {
             session.getTransaction().rollback();
-            throw new LoginUserException("Ошибка извлечения пользователя по логину");
+            throw new LoginUserException("Ошибка входа: проверьте вводимые данные");
         } finally {
             session.close();
         }
