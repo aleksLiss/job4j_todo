@@ -61,10 +61,7 @@ public class TaskController {
     public String getOneTaskById(Model model, @PathVariable int id) {
         try {
             Optional<Task> foundTask = taskService.getById(id);
-            if (foundTask.isEmpty()) {
-                throw new RuntimeException();
-            }
-            model.addAttribute("task", foundTask.get());
+            foundTask.ifPresent(task -> model.addAttribute("task", task));
         } catch (Exception ex) {
             model.addAttribute("message", "Ошибка извлечения задачи");
             return "errors/404";
@@ -74,19 +71,34 @@ public class TaskController {
 
     @PostMapping("/update")
     public String updateTask(Model model, @ModelAttribute Task task) {
-        taskService.update(task);
+        try {
+            taskService.update(task);
+        } catch (Exception ex) {
+            model.addAttribute("message", "Ошибка обновления задачи");
+            return "errors/404";
+        }
         return "redirect:/tasks/list/all";
     }
 
     @GetMapping("/delete/{id}")
     public String deleteById(Model model, @PathVariable int id) {
-        taskService.delete(id);
+        try {
+            taskService.delete(id);
+        } catch (Exception ex) {
+            model.addAttribute("message", "Ошибка удаления задачи");
+            return "errors/404";
+        }
         return "redirect:/tasks/list/all";
     }
 
     @PostMapping("/create")
-    public String createTask(@ModelAttribute Task task) {
-        taskService.save(task);
+    public String createTask(Model model, @ModelAttribute Task task) {
+        try {
+            taskService.save(task);
+        } catch (Exception ex) {
+            model.addAttribute("message", "Ошибка создания задачи");
+            return "errors/404";
+        }
         return "redirect:/tasks/list/all";
     }
 
@@ -97,16 +109,15 @@ public class TaskController {
 
     @GetMapping("/update/{id}")
     public String getUpdateTask(Model model, @PathVariable int id) {
-        Optional<Task> foundTask = taskService.getById(id);
         try {
-            if (foundTask.isEmpty()) {
-                throw new RuntimeException();
+            Optional<Task> foundTask = taskService.getById(id);
+            if (foundTask.isPresent()) {
+                model.addAttribute("task", foundTask.get());
             }
-            model.addAttribute("task", foundTask.get());
-            return "tasks/update";
         } catch (Exception ex) {
             model.addAttribute("message", "Ошибка редактирования задачи");
             return "errors/404";
         }
+        return "tasks/update";
     }
 }

@@ -3,7 +3,7 @@ package ru.job4j.todo.service;
 import net.jcip.annotations.ThreadSafe;
 import org.springframework.stereotype.Service;
 import ru.job4j.todo.model.Task;
-import ru.job4j.todo.repository.Store;
+import ru.job4j.todo.repository.TaskStore;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,9 +13,9 @@ import java.util.Optional;
 @ThreadSafe
 public class HbmTaskService implements TaskService {
 
-    private final Store taskRepository;
+    private final TaskStore taskRepository;
 
-    public HbmTaskService(Store taskRepository) {
+    public HbmTaskService(TaskStore taskRepository) {
         this.taskRepository = taskRepository;
     }
 

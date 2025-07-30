@@ -3,7 +3,11 @@ package ru.job4j.todo.repository;
 import net.jcip.annotations.ThreadSafe;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
+import ru.job4j.todo.advice.GlobalExceptionHandler;
+import ru.job4j.todo.exception.*;
 import ru.job4j.todo.model.Task;
 
 import java.time.LocalDateTime;
@@ -12,11 +16,12 @@ import java.util.Optional;
 
 @Repository
 @ThreadSafe
-public class TaskRepository implements Store {
+public class SimpleTaskRepository implements TaskStore {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(SimpleTaskRepository.class);
     private final SessionFactory sessionFactory;
 
-    public TaskRepository(SessionFactory sessionFactory) {
+    public SimpleTaskRepository(SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
     }
 
@@ -29,7 +34,8 @@ public class TaskRepository implements Store {
             session.getTransaction().commit();
         } catch (Exception ex) {
             session.getTransaction().rollback();
-            throw new RuntimeException("Error save task");
+            LOGGER.error("Ошибка сохранения задачи в базу");
+            throw new SaveTaskException("Ошибка сохранения задачи в базу");
         } finally {
             session.close();
         }
@@ -47,7 +53,8 @@ public class TaskRepository implements Store {
             session.getTransaction().commit();
         } catch (Exception ex) {
             session.getTransaction().rollback();
-            throw new RuntimeException("Error get all tasks");
+            LOGGER.error("Ошибка извлечения всех задач");
+            throw new GetAllTasksException("Ошибка извлечения всех задач");
         } finally {
             session.close();
         }
@@ -69,7 +76,8 @@ public class TaskRepository implements Store {
             session.getTransaction().commit();
         } catch (Exception ex) {
             session.getTransaction().rollback();
-            throw new RuntimeException("Error get new tasks");
+            LOGGER.error("Ошибка извлечения новых задач");
+            throw new GetNewTasksException("Ошибка извлечения новых задач");
         } finally {
             session.close();
         }
@@ -88,7 +96,8 @@ public class TaskRepository implements Store {
             session.getTransaction().commit();
         } catch (Exception ex) {
             session.getTransaction().rollback();
-            throw new RuntimeException("Error get done tasks");
+            LOGGER.error("Ошибка извлечения выполненных задач");
+            throw new GetDoneTasksException("Ошибка извлечения выполненных задач");
         } finally {
             session.close();
         }
@@ -100,7 +109,6 @@ public class TaskRepository implements Store {
         Session session = sessionFactory.openSession();
         try {
             session.beginTransaction();
-//            session.update(task);
             session
                     .createQuery(
                             "UPDATE Task SET title = :tsTitle, description = :tsDescription, created = :tsCreated, done = :tsDone WHERE id = :tId")
@@ -113,7 +121,8 @@ public class TaskRepository implements Store {
             session.getTransaction().commit();
         } catch (Exception ex) {
             session.getTransaction().rollback();
-            throw new RuntimeException("Error update task");
+            LOGGER.error("Ошибка обновления задачи в базе");
+            throw new UpdateTaskException("Ошибка обновления задачи");
         } finally {
             session.close();
         }
@@ -129,7 +138,8 @@ public class TaskRepository implements Store {
             session.getTransaction().commit();
         } catch (Exception ex) {
             session.getTransaction().rollback();
-            throw new RuntimeException("Error delete task");
+            LOGGER.error("Ошибка удаления задачи из базы");
+            throw new DeleteTaskException("Ошибка удаления задачи из базы");
         } finally {
             session.close();
         }
@@ -148,7 +158,8 @@ public class TaskRepository implements Store {
             );
         } catch (Exception ex) {
             session.getTransaction().rollback();
-            throw new RuntimeException("Error get task by id");
+            LOGGER.error("Ошибка извлечения задачи из базы");
+            throw new GetTaskByIdException("Ошибка извлечения задачи из базы");
         } finally {
             session.close();
         }
